@@ -1,0 +1,27 @@
+{
+    "files.associations": {
+        "*.tf": "terraform"
+    },
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "never"
+    },
+    "editor.formatOnSave": true,
+    "task.autoDetect": "on",
+    "runOnSave.statusMessageTimeout": 3000,
+    "runOnSave.commands": [
+        {
+            // Match any tf files by path.
+            "match": ".*\\.tf$",
+            "command": "cd ./infrastructure >/dev/null 2>&1 || tofu fmt -recursive && tofu validate",
+            "runIn": "terminal"
+        },
+        {
+            // Match any python files by language id.
+            "languages": [
+                "python"
+            ],
+            "command": "python.runLinting",
+            "runIn": "vscode"
+        }
+    ]
+}

@@ -1,0 +1,6 @@
+- terraform output ips into ansible inventory, preferably group by cp, worker
+- smh change templates/pve-prepare-ubuntu-template.sh so it's compatible with ansible inventory or maybe make an ansible install script for cluster nodes and run logic in ansible idk :D
+- decide between kargo or kubespray
+    - figure out how to integrate them into the project 
+    - configure them
+    - adjust spin-up.py

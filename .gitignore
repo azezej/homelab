@@ -1,5 +1,9 @@
 infrastructure/.credentials
 infrastructure/.terraform/*
 infrastructure/.terraform.lock.hcl
-infrastructure/terraform.tfstate
-infrastructure/credentials.tfvars
+infrastructure/*.tfstate*
+infrastructure/terraform.tfvars
+infrastructure/ssh-keys/*
+infrastructure/tfplan 
+templates/password_*
+tf-cloud-init*
