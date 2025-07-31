@@ -1,0 +1,4 @@
+proxmox_host: "10.69.69.2"
+proxmox_api_user: "terraform-prov@pve"
+proxmox_api_pass: ""
+inventory_file: "inventories/inventory.ini"

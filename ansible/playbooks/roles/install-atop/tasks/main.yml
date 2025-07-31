@@ -1,0 +1,8 @@
+---
+# tasks file for install-atop
+- name: Install Atop
+  ansible.builtin.apt:
+    name: atop
+    state: present
+    update_cache: true
+...

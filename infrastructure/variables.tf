@@ -1,267 +1,276 @@
 # -------------------------
 # General Proxmox Variables
 # -------------------------
-variable "pm_api_url" {
-  description = "Proxmox API URL"
-  type        = string
-  default     = "https://10.69.69.2:8006/api2/json"
-}
 
-variable "pm_user" {
-  description = "Proxmox username"
-  type        = string
-  default     = "terraform-prov@pam"
-}
+variable "proxmox_settings" {
+  description = "Proxmox settings for the infrastructure"
+  type = object({
+    pm_api_url      = string
+    pm_user         = string
+    pm_password     = string
+    pm_tls_insecure = bool
 
-variable "pm_password" {
-  description = "Proxmox password"
-  type        = string
-  sensitive   = true
-}
-
-variable "pm_tls_insecure" {
-  description = "Proxmox tls trusted?"
-  type        = bool
-}
-
-variable "nodes" {
-  description = "List of Proxmox nodes to deploy the VMs on"
-  type        = map(string)
-  default = {
-    "1" = "atena"
-    "2" = "zeus"
-    "3" = "afrodyta"
-  }
-}
-
-variable "templates" {
-  description = "List of Proxmox templates to use for cloning VMs"
-  type        = map(string)
-  default = ({
-    "atena"    = "888"
-    "zeus"     = "999"
-    "afrodyta" = "777"
+    nodes    = map(string)
+    template = string
   })
+  default = {
+    pm_api_url      = "https://10.69.69.2:8006/api2/json"
+    pm_user         = "terraform-prov@pam"
+    pm_password     = "password"
+    pm_tls_insecure = true
+
+    nodes = {
+      "1" = "atena"
+      "2" = "zeus"
+      "3" = "afrodyta"
+    }
+
+    template = "ubuntu-24.04-template"
+  }
 }
 
 # -------------------------
 # SSH Variables
 # -------------------------
-variable "ssh_user" {
-  description = "ssh username"
-  type        = string
-  default     = "blazej"
-}
 
-variable "ssh_password" {
-  description = "ssh password"
-  type        = string
-  sensitive   = true
-}
-
-variable "ssh_host" {
-  description = "SSH host for remote execution"
-  type        = string
-  default     = "localhost"
-}
-
-variable "ssh_port" {
-  description = "SSH port for remote execution"
-  type        = number
-  default     = 22
-}
-
-variable "ssh_private_key_path" {
-  description = "Path to the SSH private key for remote execution"
-  type        = string
-  default     = "../tf-cloud-init"
-}
-
-variable "ssh_keys" {
-  description = "SSH public keys for remote execution"
-  type        = string
-  default     = ""
+variable "ssh_settings" {
+  description = "SSH settings for control plane nodes"
+  type = object({
+    ssh_user     = string
+    ssh_password = string
+    ssh_keys     = string
+  })
+  default = {
+    ssh_user     = "root"
+    ssh_password = "password"
+    ssh_keys     = ""
+  }
 }
 
 # -------------------------
 # Network Variables
 # -------------------------
-variable "subnet" {
-  description = "Subnet for control plane nodes"
-  type        = string
-  default     = "10.69.69"
-}
 
-variable "subnet_mask" {
-  description = "Subnet mask for control plane nodes"
-  type        = string
-  default     = "24"
-}
+variable "network_settings" {
+  description = "Network settings for control plane nodes"
+  type = object({
+    subnet  = string
+    cidr    = string
+    netmask = string
+    gateway = string
+    dns01   = string
+    dns02   = string
 
-variable "gateway" {
-  description = "Gateway for control plane nodes"
-  type        = string
-  default     = "10.69.69.1"
-}
+    network_id     = string
+    network_model  = string
+    network_bridge = string
+  })
+  default = {
+    subnet  = "10.69.69"
+    cidr    = "24"
+    netmask = "255.255.255.0"
+    gateway = "10.69.69.1"
+    dns01   = "10.69.69.10"
+    dns02   = "10.69.69.10"
 
-# -------------------------
-# Control Plane Variables
-# -------------------------
-variable "cp_hostname_prefix" {
-  description = "Hostname prefix for control plane nodes"
-  type        = string
-  default     = "k8s-cp"
-}
-
-variable "cp_cpu_cores" {
-  description = "Number of CPU cores for control plane nodes"
-  type        = number
-  default     = 2
-}
-
-variable "cp_cpu_sockets" {
-  description = "Number of CPU sockets for control plane nodes"
-  type        = number
-  default     = 1
-}
-
-variable "cp_memory" {
-  description = "Memory in GB for control plane nodes"
-  type        = number
-  default     = 4
-}
-
-variable "cp_agent" {
-  description = "Enable QEMU agent for control plane nodes"
-  type        = number
-  default     = 1 // 0 = false, 1 = true
-}
-
-variable "cp_cloudinit_storage" {
-  description = "Storage for cloud-init data for control plane nodes"
-  type        = string
-  default     = "local-lvm"
-}
-
-variable "cp_disk_size" {
-  description = "Disk size in GB for control plane nodes"
-  type        = number
-  default     = 32
-}
-
-variable "cp_disk_cache" {
-  description = "Disk cache mode for control plane nodes"
-  type        = string
-  default     = "writeback"
-}
-
-variable "cp_disk_storage" {
-  description = "Storage for disks of control plane nodes"
-  type        = string
-  default     = "local-lvm"
-}
-
-variable "cp_replicate" {
-  description = "Enable disk replication for control plane nodes"
-  type        = bool
-  default     = false
-}
-
-variable "cp_network_id" {
-  description = "Network ID for control plane nodes"
-  type        = number
-  default     = 0
-}
-
-variable "cp_network_model" {
-  description = "Network model for control plane nodes"
-  type        = string
-  default     = "virtio"
-}
-
-variable "cp_network_bridge" {
-  description = "Network bridge for control plane nodes"
-  type        = string
-  default     = "vmbr0"
+    network_id     = "1"
+    network_model  = "virtio"
+    network_bridge = "vmbr0"
+  }
 }
 
 # -------------------------
-# Worker Variables
+# K8S Control Plane Variables
 # -------------------------
-variable "worker_hostname_prefix" {
-  description = "Hostname prefix for worker nodes"
-  type        = string
-  default     = "k8s-worker"
+
+variable "cp_settings" {
+  description = "Settings for control plane nodes"
+  type = object({
+    hostname_prefix   = string
+    hostname_postfix  = optional(string, "")
+    tags              = optional(string, "")
+    cpu_cores         = number
+    cpu_sockets       = number
+    memory            = number
+    agent             = number
+    cloudinit_storage = string
+    disk_size         = number
+    disk_cache        = string
+    disk_storage      = string
+    replicate         = bool
+    os_type           = string
+    preprovision      = bool
+  })
+  default = {
+    hostname_prefix   = "k8s-cp"
+    hostname_postfix  = "katedra.kys"
+    cpu_cores         = 2
+    cpu_sockets       = 1
+    memory            = 4
+    agent             = 1
+    cloudinit_storage = "local-lvm"
+    disk_size         = 32
+    disk_cache        = "writeback"
+    disk_storage      = "local-lvm"
+    replicate         = false
+    os_type           = "ubuntu"
+    preprovision      = true
+  }
 }
 
-variable "worker_cpu_cores" {
-  description = "Number of CPU cores for worker nodes"
-  type        = number
-  default     = 2
+# -------------------------
+# K8S Worker Variables
+# -------------------------
+
+variable "worker_settings" {
+  description = "Settings for worker nodes"
+  type = object({
+    hostname_prefix   = string
+    hostname_postfix  = optional(string, "")
+    tags              = optional(string, "")
+    cpu_cores         = number
+    cpu_sockets       = number
+    memory            = number
+    agent             = number
+    cloudinit_storage = string
+    disk_size         = number
+    disk_cache        = string
+    disk_storage      = string
+    replicate         = bool
+    os_type           = string
+    preprovision      = bool
+  })
+  default = {
+    hostname_prefix   = "k8s-worker"
+    hostname_postfix  = "katedra.kys"
+    cpu_cores         = 2
+    cpu_sockets       = 1
+    memory            = 4
+    agent             = 0
+    cloudinit_storage = "local-lvm"
+    disk_size         = 32
+    disk_cache        = "writeback"
+    disk_storage      = "local-lvm"
+    replicate         = false
+    os_type           = "ubuntu"
+    preprovision      = true
+  }
 }
 
-variable "worker_cpu_sockets" {
-  description = "Number of CPU sockets for worker nodes"
-  type        = number
-  default     = 1
+# -------------------------
+# dns Variables
+# -------------------------
+
+variable "ns01_settings" {
+  description = "Settings for dns node"
+  type = object({
+    hostname_prefix   = string
+    hostname_postfix  = optional(string, "")
+    tags              = optional(string, "")
+    vmid              = number
+    cpu_cores         = number
+    cpu_sockets       = number
+    memory            = number
+    agent             = number
+    cloudinit_storage = string
+    disk_size         = string
+    disk_cache        = string
+    disk_storage      = string
+    replicate         = bool
+    os_type           = string
+    preprovision      = bool
+  })
+  default = {
+    hostname_prefix   = "dns"
+    hostname_postfix  = "katedra.kys"
+    vmid              = 100
+    cidr              = 10
+    cpu_cores         = 1
+    cpu_sockets       = 1
+    memory            = 2
+    agent             = 1
+    cloudinit_storage = "local-lvm"
+    disk_size         = "8G"
+    disk_cache        = "writeback"
+    disk_storage      = "local-lvm"
+    replicate         = false
+    os_type           = "ubuntu"
+    preprovision      = true
+  }
 }
 
-variable "worker_memory" {
-  description = "Memory in GB for worker nodes"
-  type        = number
-  default     = 4
+variable "ns02_settings" {
+  description = "Settings for dns node"
+  type = object({
+    hostname_prefix   = string
+    hostname_postfix  = optional(string, "")
+    tags              = optional(string, "")
+    vmid              = number
+    cpu_cores         = number
+    cpu_sockets       = number
+    memory            = number
+    agent             = number
+    cloudinit_storage = string
+    disk_size         = string
+    disk_cache        = string
+    disk_storage      = string
+    replicate         = bool
+    os_type           = string
+    preprovision      = bool
+  })
+  default = {
+    hostname_prefix   = "dns"
+    hostname_postfix  = "katedra.kys"
+    vmid              = 100
+    cidr              = 10
+    cpu_cores         = 1
+    cpu_sockets       = 1
+    memory            = 2
+    agent             = 1
+    cloudinit_storage = "local-lvm"
+    disk_size         = "8G"
+    disk_cache        = "writeback"
+    disk_storage      = "local-lvm"
+    replicate         = false
+    os_type           = "ubuntu"
+    preprovision      = true
+  }
 }
 
-variable "worker_agent" {
-  description = "Enable QEMU agent for worker nodes"
-  type        = number
-  default     = 0 // 0 = false, 1 = true
-}
-
-variable "worker_cloudinit_storage" {
-  description = "Storage for cloud-init data for worker nodes"
-  type        = string
-  default     = "local-lvm"
-}
-
-variable "worker_disk_size" {
-  description = "Disk size in GB for worker nodes"
-  type        = number
-  default     = 32
-}
-
-variable "worker_disk_cache" {
-  description = "Disk cache mode for worker nodes"
-  type        = string
-  default     = "writeback"
-}
-
-variable "worker_disk_storage" {
-  description = "Storage for disks of worker nodes"
-  type        = string
-  default     = "local-lvm"
-}
-
-variable "worker_replicate" {
-  description = "Enable disk replication for worker nodes"
-  type        = bool
-  default     = false
-}
-
-variable "worker_network_id" {
-  description = "Network ID for worker nodes"
-  type        = number
-  default     = 0
-}
-
-variable "worker_network_model" {
-  description = "Network model for worker nodes"
-  type        = string
-  default     = "virtio"
-}
-
-variable "worker_network_bridge" {
-  description = "Network bridge for worker nodes"
-  type        = string
-  default     = "vmbr0"
+variable "dockerzilla_settings" {
+  description = "Settings for dockerzilla node"
+  type = object({
+    hostname_prefix   = string
+    hostname_postfix  = optional(string, "")
+    tags              = optional(string, "")
+    vmid              = number
+    cpu_cores         = number
+    cpu_sockets       = number
+    memory            = number
+    agent             = number
+    cloudinit_storage = string
+    disk_size         = string
+    disk_cache        = string
+    disk_storage      = string
+    replicate         = bool
+    os_type           = string
+    preprovision      = bool
+  })
+  default = {
+    hostname_prefix   = "dockerzilla"
+    hostname_postfix  = "katedra.kys"
+    vmid              = 100
+    cidr              = 10
+    cpu_cores         = 1
+    cpu_sockets       = 1
+    memory            = 2
+    agent             = 1
+    cloudinit_storage = "local-lvm"
+    disk_size         = "8G"
+    disk_cache        = "writeback"
+    disk_storage      = "local-lvm"
+    replicate         = false
+    os_type           = "ubuntu"
+    preprovision      = true
+  }
 }

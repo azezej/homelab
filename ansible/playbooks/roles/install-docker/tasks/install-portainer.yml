@@ -1,0 +1,37 @@
+---
+- name: Check if docker is installed and running
+  ansible.builtin.command: "docker info"
+  register: docker_info
+  changed_when: false
+  failed_when: false
+
+- name: Create portainer_data volume
+  ansible.builtin.docker_volume:
+    name: portainer_data
+    state: present
+
+- name: Install Portainer
+  ansible.builtin.docker_container:
+    name: portainer
+    image: portainer/portainer-ce:latest
+    state: started
+    restart_policy: unless-stopped
+    published_ports:
+    - "8000:8000"
+    - "9443:9443"
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    - portainer_data:/data
+  when: docker_info.rc == 0
+
+- name: Wait for Portainer to be ready
+  ansible.builtin.wait_for:
+    port: 9443
+    delay: 10
+    timeout: 60
+  when: docker_info.rc == 0
+
+- name: Display Portainer installation message
+  ansible.builtin.debug:
+    msg: "Portainer is installed and running. Access it at https://{{ ansible_default_ipv4.address }}:9443"
+  when: docker_info.rc == 0

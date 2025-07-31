@@ -1,0 +1,8 @@
+---
+# tasks file for install-rsync
+- name: Install rsync
+  ansible.builtin.apt:
+    name: rsync
+    state: present
+    update_cache: true
+...

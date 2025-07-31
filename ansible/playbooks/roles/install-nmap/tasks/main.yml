@@ -1,0 +1,8 @@
+---
+# tasks file for install-nmap
+- name: Install Nmap
+  ansible.builtin.apt:
+    name: nmap
+    state: present
+    update_cache: true
+...

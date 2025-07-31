@@ -1,0 +1,34 @@
+---
+# tasks file for install-ntp
+- name: Install NTP
+  ansible.builtin.apt:
+    name: ntp
+    state: present
+    update_cache: true
+- name: Ensure NTP service is running and enabled
+  ansible.builtin.systemd:
+    name: ntp
+    enabled: true
+    state: started
+- name: Ensure NTP configuration is correct
+  ansible.builtin.template:
+    src: ntp.conf.j2
+    dest: /etc/ntp.conf
+    owner: root
+    group: root
+    mode: '0644'
+  vars:
+    ntpserver: "0.pl.pool.ntp.org"
+- name: Restart NTP service to apply configuration changes
+  ansible.builtin.systemd:
+    name: ntp
+    state: restarted
+- name: Ensure NTP is synchronized
+  ansible.builtin.command: ntpq -p
+  register: ntp_status
+  changed_when: false
+- name: Fail if NTP is not synchronized
+  ansible.builtin.fail:
+    msg: "NTP is not synchronized. Please check the NTP configuration."
+  when: ntp_status.stdout.find('synchronized') == -1
+...

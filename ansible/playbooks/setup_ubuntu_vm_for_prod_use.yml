@@ -1,0 +1,24 @@
+---
+- name: Setup Ubuntu VM for Production Use
+  hosts: ubuntu:&prod
+  gather_facts: false
+  become: true
+  roles:
+    - install-git
+    - install-ufw
+    - install-fail2ban
+    - install-ntp
+    - install-rsync
+    - install-nmap
+    - install-curl
+    - install-wget
+    - install-atop
+    - setup-ssh-server
+    - setup-ufw-firewall
+    - setup-fail2ban
+    - setup-ntp
+    - setup-git
+    - setup-grafana-alloy
+    - setup-syslog
+    - setup-dns
+...

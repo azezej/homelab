@@ -1,0 +1,94 @@
+---
+# tasks file for install-ufw
+- name: Install UFW
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+    update_cache: true
+
+- name: Ensure UFW is enabled
+  community.general.ufw:
+    state: enabled
+
+- name: Allow SSH connections from {{ subnet }}
+  community.general.ufw:
+    rule: allow
+    name: 'SSH'
+    port: '22'
+    proto: tcp
+    from_ip: "{{ subnet }}"
+
+- name: Check if server is listening on HTTP port
+  ansible.builtin.command: "ss -tuln | grep ':80 '"
+  register: http_listener
+  changed_when: false
+
+- name: Check if server is listening on DNS port
+  ansible.builtin.command: "ss -tuln | grep ':53'"
+  register: dns_listener
+  changed_when: false
+
+- name: Check if server is listening on HTTPS port
+  ansible.builtin.command: "ss -tuln | grep ':443'"
+  register: https_listener
+  changed_when: false
+
+- name: Check if server is listening on Proxmox GUI port
+  ansible.builtin.command: "ss -tuln | grep ':8006 '"
+  register: proxmox_listener
+  changed_when: false
+
+- name: Check if server is listening on Proxmox GUI port
+  ansible.builtin.command: "ss -tuln | grep ':8006 '"
+  register: proxmox_listener
+  changed_when: false
+
+- name: Check if server is hosting Home Assistant
+  ansible.builtin.command: "ss -tuln | grep ':8123 '"
+  register: home_assistant_listener
+  changed_when: false
+
+- name: Allow HTTP connections
+  community.general.ufw:
+    rule: allow
+    name: 'HTTP'
+    port: '80'
+    proto: tcp
+  when: http_listener.stdout != ""
+
+- name: Allow DNS connections
+  community.general.ufw:
+    rule: allow
+    name: 'DNS'
+    port: '53'
+    proto: udp
+  when: dns_listener.stdout != ""
+
+- name: Allow HTTPS connections
+  community.general.ufw:
+    rule: allow
+    name: 'HTTPS'
+    port: '443'
+    proto: tcp
+  when: https_listener.stdout != ""
+
+- name: Allow Proxmox GUI connections
+  community.general.ufw:
+    rule: allow
+    name: 'Proxmox GUI'
+    port: '8006'
+    proto: tcp
+  when: proxmox_listener.stdout != ""
+
+- name: Allow Home Assistant connections
+  community.general.ufw:
+    rule: allow
+    name: 'Home Assistant'
+    port: '8123'
+    proto: tcp
+  when: home_assistant_listener.stdout != ""
+
+- name: Display UFW status
+  ansible.builtin.debug:
+    msg: "UFW is active and configured with the following rules:\n{{ ufw_status.stdout }}"
+  when: ufw_status is changed or ufw_status.stdout != ""

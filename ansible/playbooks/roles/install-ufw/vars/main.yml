@@ -1,0 +1,4 @@
+---
+# vars file for install-ufw
+subnet: "10.69.69.0/16"
+...

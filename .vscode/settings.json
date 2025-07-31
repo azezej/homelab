@@ -1,6 +1,6 @@
 {
     "files.associations": {
-        "*.tf": "terraform"
+        "*.tf": "tf"
     },
     "editor.codeActionsOnSave": {
         "source.fixAll": "never"
@@ -23,5 +23,6 @@
             "command": "python.runLinting",
             "runIn": "vscode"
         }
-    ]
+    ],
+    "ansible.python.interpreterPath": "/bin/python"
 }

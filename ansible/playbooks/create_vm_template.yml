@@ -1,0 +1,92 @@
+---
+- name: Prepare Proxmox nodes and create VM template
+  hosts: proxmox_nodes
+  become: true
+  vars:
+    ubuntu_image_url: https://cloud-images.ubuntu.com/daily/server/server/noble/current/noble-server-cloudimg-amd64.img
+    ubuntu_image_name: noble-server-cloudimg-amd64.img
+    template_name: ubuntu-24.04-template
+    storage_pool: vmstore
+    bridge_name: vmbr0
+    base_template_id: 100
+    used_vmids: []
+
+  tasks:
+    - name: Assign unique template_id per node
+      ansible.builtin.set_fact:
+        template_id: "{{ 100 + (groups['proxmox_nodes'].index(inventory_hostname) * 10) }}"
+
+    - name: Assign template_id as string for later use
+      ansible.builtin.set_fact:
+        template_id_str: "{{ template_id | string }}"
+
+    - name: Display the selected template_id for node
+      ansible.builtin.debug:
+        msg: "Selected template_id: {{ template_id }} for node {{ inventory_hostname }}"
+
+    - name: Remove old template
+      ansible.builtin.shell: |
+        qm set {{ template_id }} --template 0
+        qm destroy {{ template_id }} --purge
+      register: remove_template_result
+      failed_when: remove_template_result.rc != 0 and remove_template_result.stdout.find(template_id_str) == -1
+      changed_when: remove_template_result.rc == 0
+      ignore_errors: true
+
+    - name: Remove old images
+      ansible.builtin.file:
+        path: "/root/{{ ubuntu_image_name }}"
+        state: absent
+
+    - name: Download Ubuntu cloud image
+      ansible.builtin.get_url:
+        url: "{{ ubuntu_image_url }}"
+        dest: "/root/{{ ubuntu_image_name }}"
+        mode: '0644'
+
+    - name: Copy password files
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/{{ item }}"
+        dest: "/root/{{ item }}"
+        mode: '0600'
+      with_items:
+        - password_root
+        - password_ansible
+        - password_blazej
+
+    - name: Resize Ubuntu cloud image to 16G
+      ansible.builtin.command: qemu-img resize /root/{{ ubuntu_image_name }} +8G
+      changed_when: false
+
+    - name: Customize cloud image with virt-customize
+      ansible.builtin.shell: |
+        virt-customize -a {{ ubuntu_image_name }} \
+          --root-password file:/root/password_root \
+          --install "qemu-guest-agent" \
+          --run-command "useradd -m -s /bin/bash ansible" \
+          --run-command "useradd -m -s /bin/bash blazej" \
+          --run-command "usermod -aG sudo ansible" \
+          --run-command "usermod -aG sudo blazej" \
+          --run-command "echo 'ansible ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers" \
+          --run-command "echo 'blazej ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers" \
+          --password ansible:file:/root/password_ansible \
+          --password blazej:file:/root/password_blazej
+      args:
+        chdir: /root
+      register: customize_result
+      changed_when: customize_result.rc == 0
+
+    - name: Create Proxmox VM template
+      ansible.builtin.shell: |
+        qm create {{ template_id }} --name "{{ template_name }}" --memory 2048 --cores 2 --net0 virtio,bridge={{ bridge_name }}
+        qm importdisk {{ template_id }} {{ ubuntu_image_name }} {{ storage_pool }}
+        qm set {{ template_id }} --scsihw virtio-scsi-pci --scsi0 {{ storage_pool }}:vm-{{ template_id }}-disk-0
+        qm set {{ template_id }} --boot c --bootdisk scsi0
+        qm set {{ template_id }} --ide2 {{ storage_pool }}:cloudinit
+        qm set {{ template_id }} --serial0 socket --vga serial0
+        qm set {{ template_id }} --agent enabled=1
+        qm template {{ template_id }}
+      args:
+        chdir: /root
+        creates: "/dev/vms-vg/vm-{{ template_id }}-cloudinit"
+...

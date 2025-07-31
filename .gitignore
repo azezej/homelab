@@ -7,3 +7,23 @@ infrastructure/ssh-keys/*
 infrastructure/tfplan 
 templates/password_*
 tf-cloud-init*
+
+ansible/ansible.cfg
+ansible/group_vars/all.yml
+ansible/host_vars/*
+ansible/inventories/*
+
+ansible/ansible_env
+ansible/kubespray-venv
+
+# Ignore everything in ansible/kubespray
+ansible/kubespray/*
+
+# But not these files/folders:
+!ansible/kubespray/roles/
+!ansible/kubespray/inventory/
+!ansible/kubespray/playbooks/
+!ansible/kubespray/ansible.cfg
+!ansible/kubespray/cluster.yml
+
+ansible/playbooks/files/password*

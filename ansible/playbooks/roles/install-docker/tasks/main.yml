@@ -1,0 +1,23 @@
+---
+# tasks file for install-docker
+- name: Load OS-specific vars.
+  ansible.builtin.include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - '{{ ansible_distribution }}.yml'
+        - '{{ ansible_os_family }}.yml'
+        - main.yml
+      paths:
+        - 'vars'
+
+- name: Install Docker APT Repos on {{ ansible_distribution }}
+  ansible.builtin.include_tasks: install-docker-on-ubuntu.yml
+  when: ansible_os_family == 'Debian' and ansible_distribution == 'Ubuntu'
+
+- name: Install Docker on {{ ansible_distribution }}
+  ansible.builtin.package:
+    name: "{{ docker_packages }}"
+    state: present
+  when: ansible_os_family == 'Debian' and ansible_distribution != 'Ubuntu'
+...

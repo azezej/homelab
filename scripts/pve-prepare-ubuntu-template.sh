@@ -2,17 +2,17 @@
 
 # run on Proxmox VE host to prepare an Ubuntu template for use with Terraform and Ansible
 # Source a file containing a list of node hostnames or IPs and SSH into each to run multiple commands
-NODES_FILE="/home/blazej/homelab/templates/nodes.txt"
+NODES_FILE="../ansible/inventories/inventory.ini"
 if [[ -f "$NODES_FILE" ]]; then
     while read -r node; do
         [[ -z "$node" || "$node" =~ ^# ]] && continue
         echo "Connecting to $node..."
-        ssh "$node" "
+        ssh "$node" -i "../infrastructure/ssh-keys/tf-cloud-init" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "
             sudo apt update -y
             sudo apt install -y libguestfs-tools
             sudo apt install -y qemu-utils
             sudo systemctl enable --now qemu-guest-agent
-            wget https://cloud-images.ubuntu.com/daily/server/jammy/current/jammy-server-cloudimg-amd64.img
+            wget https://cloud-images.ubuntu.com/daily/server/server/noble/current/noble-server-cloudimg-amd64.img 
 
             echo "kurwa" > password_root.txt
             echo "ansible" > password_ansible.txt
@@ -39,7 +39,7 @@ if [[ -f "$NODES_FILE" ]]; then
 
             # Next, we create a Proxmox VM template.
             # Change values for your bridge and storage and change defaults to your liking.
-            qm create 777 --name "ubuntu-22.04-template" --memory 2048 --cores 2 --net0 virtio,bridge=vmbr0
+            qm create 777 --name "ubuntu-24.04-template" --memory 2048 --cores 2 --net0 virtio,bridge=vmbr0
             qm importdisk 777 jammy-server-cloudimg-amd64.img vmstore
             qm set 777 --scsihw virtio-scsi-pci --scsi0 vmstore:vm-777-disk-0
             qm set 777 --boot c --bootdisk scsi0
